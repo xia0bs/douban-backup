@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import got from 'got';
+import { consola } from 'consola';
 import type { FeedItem, ItemCategory } from "./types";
 import { sleep } from './utils';
 
@@ -36,12 +37,12 @@ export default async function handleNeodb(feeds: FeedItem[]): Promise<void> {
     return;
   }
 
-  console.log('Going to sync to NeoDB...');
+  consola.start('Going to sync to NeoDB...');
   // 同步标记到 neodb
   for (const item of feeds) {
     await insertToNeodb(item);
   }
-  console.log('NeoDB synced ✨');
+  consola.success('NeoDB synced ✨');
 }
 
 /**
@@ -53,40 +54,57 @@ export default async function handleNeodb(feeds: FeedItem[]): Promise<void> {
  */
 async function insertToNeodb(item: FeedItem): Promise<void> {
   // fetch item by douban link
-  const neodbItem = await got('https://neodb.social/api/catalog/fetch', {
-    searchParams: {
-      url: item.link,
-    },
-    headers: {
-      accept: 'application/json',
-    },
-  }).json() as NeodbItem;
-  // 条目不存在的话会被创建，但此时会返回 {message: 'Fetch in progress'}
-  if (neodbItem.uuid) {
-    try {
-      const mark = await got(
-        `https://neodb.social/api/me/shelf/item/${neodbItem.uuid}`,
-        {
-          headers: {
-            Authorization: `Bearer ${neodbToken}`,
-            accept: 'application/json',
-          },
+  consola.info('Going to fetch item: ', item.link);
+  try {
+    const neodbItem = (await got('https://neodb.social/api/catalog/fetch', {
+      searchParams: {
+        url: item.link,
+      },
+      headers: {
+        accept: 'application/json',
+      },
+    }).json()) as NeodbItem;
+
+    // 条目不存在的话会被创建
+    // If the item is available in the catalog, HTTP 302 will be returned.
+    //    And the item's info will be redirected
+    // If the item is not available in the catalog, HTTP 202 will be returned.
+    //    and message with "Fetch in progress" and need to wait and fetch again
+    if (neodbItem.uuid) {
+      consola.info(
+        'Going to check item mark status: ',
+        `${neodbItem.title}[${item.link}]`
+      );
+      try {
+        const mark = (await got(
+          `https://neodb.social/api/me/shelf/item/${neodbItem.uuid}`,
+          {
+            headers: {
+              Authorization: `Bearer ${neodbToken}`,
+              accept: 'application/json',
+            },
+          }
+        ).json()) as any;
+        if (mark.shelf_type !== item.status) {
+          // 标记状态不一样，所以更新标记
+          consola.info('Item status changed, going to update: ', `${neodbItem.title}[${item.link}]`);
+          await markItem(neodbItem, item);
         }
-      ).json();
-      if (mark.shelf_type !== item.status) {
-        // 标记状态不一样，所以更新标记
-        await markItem(neodbItem, item);
+      } catch (error) {
+        consola.error('Query item\'s mark with error code: ', error.code);
+        if (error.code === 'ERR_NON_2XX_3XX_RESPONSE') {
+          // 标记不存在，所以创建标记
+          consola.info('Item is not marked, going to mark now: ', `${neodbItem.title}[${item.link}]`);
+          await markItem(neodbItem, item);
+        }
       }
-    } catch (error) {
-      if (error.code === 'ERR_NON_2XX_3XX_RESPONSE') {
-        // 标记不存在，所以创建标记
-        await markItem(neodbItem, item);
-      }
+    } else {
+      // 标记不存在，等待一点时间创建标记再去标记
+      await sleep(1500);
+      await insertToNeodb(item);
     }
-  } else {
-    // 标记不存在，等待一点时间创建标记再去标记
-    await sleep(1500);
-    await insertToNeodb(item);
+  } catch (error) {
+    consola.error('Fetch item with error: ', error.code);
   }
 }
 
@@ -98,7 +116,7 @@ async function insertToNeodb(item: FeedItem): Promise<void> {
  * @return {Promise<void>} a Promise that resolves when the item is successfully marked
  */
 async function markItem(neodbItem: NeodbItem, item: FeedItem): Promise<void> {
-  console.log('Going to mark on NeoDB: ', `${neodbItem.title}[${item.link}]`);
+  consola.info('Going to mark on NeoDB: ', `${neodbItem.title}[${item.link}]`);
   try {
     await got.post(`https://neodb.social/api/me/shelf/item/${neodbItem.uuid}`, {
       headers: {
@@ -115,7 +133,7 @@ async function markItem(neodbItem: NeodbItem, item: FeedItem): Promise<void> {
       },
     });
   } catch (error) {
-    console.error(
+    consola.error(
       'Failed to mark item: ', neodbItem?.title,
         ' with error: ',
       error

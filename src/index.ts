@@ -1,6 +1,6 @@
 import { consola } from 'consola';
 import { fetchRSSFeeds, handleRSSFeeds } from './handle-rss';
-import handleNotion from './handle-notion';
+import { handleNotion } from './handle-notion';
 import handleNeodb from './handle-neodb';
 import { ItemStatus } from './types';
 

@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/bambooom/douban-backup#readme",
   "engines": {
-    "node": ">=20"
+    "node": ">=20 <25"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

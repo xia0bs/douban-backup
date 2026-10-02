@@ -12,13 +12,11 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/previous-releases
+        node-version: [22.x]
 
     env:
       NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
@@ -32,10 +30,10 @@ jobs:
       NEODB_VISIBILITY: ${{ vars.NEODB_VISIBILITY || '2' }}
 
     steps:
-    - uses: actions/checkout@v6
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v6
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm run sync || exit 1
+      - uses: actions/checkout@v6
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run sync || exit 1

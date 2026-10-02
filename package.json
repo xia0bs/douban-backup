@@ -5,7 +5,7 @@
   "exports": "./index.js",
   "type": "module",
   "scripts": {
-    "sync": "tsx src/index.ts"
+    "sync": "tsx --tsconfig tsconfig.json src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
     "rss",
     "userscript"
   ],
-  "author": "zhuzi <nmz89825@gmail.com>",
+  "author": "zhuzi <nmz89825@qq.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/bambooom/douban-backup/issues"

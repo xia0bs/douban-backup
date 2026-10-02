@@ -91,9 +91,9 @@ async function syncNotionDB(categorizedFeeds: FeedItem[], category: ItemCategory
 
   consola.start(`Handling ${category} feeds...`);
 
-  // after @notionhq sdk upgraded to v5.0.0, use dataSource instead of database
-  const queryItems = await notion.dataSources.query({
-    data_source_id: dataSourceId,
+  // Use the database API here for compatibility with Notion free-tier / older integrations.
+  const queryItems = await notion.databases.query({
+    database_id: dataSourceId,
     filter: {
       or: categorizedFeeds.map((item) => ({
         property: DB_PROPERTIES.ITEM_LINK,
@@ -186,7 +186,7 @@ async function addItemToNotion(itemData: {
       throw new Error('No data source id found for category: ' + category);
     }
 
-    const db = await notion.dataSources.retrieve({ data_source_id: dataSourceId });
+    const db = await notion.databases.retrieve({ database_id: dataSourceId });
     const columns = Object.keys(db.properties);
     // remove cols which are not in the current database
     const propKeys = Object.keys(properties);
@@ -198,8 +198,8 @@ async function addItemToNotion(itemData: {
 
     const postData: CreatePageParameters = {
       parent: {
-        type: "data_source_id",
-        data_source_id: dataSourceId,
+        type: 'database_id',
+        database_id: dataSourceId,
       },
       icon: {
         type: 'emoji',

@@ -5,7 +5,7 @@
   "exports": "./index.js",
   "type": "module",
   "scripts": {
-    "sync": "tsx --tsconfig tsconfig.json src/index.ts"
+    "sync": "node --import tsx src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/bambooom/douban-backup#readme",
   "engines": {
-    "node": ">=20 <25"
+    "node": ">=20 <21"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

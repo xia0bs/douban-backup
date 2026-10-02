@@ -29,3 +29,5 @@ const notion = new Client({
 if (!notion?.databases || typeof notion.databases.query !== 'function') {
   throw new Error(`Notion client failed to initialize. Check NOTION_TOKEN and the SDK version (${notionVersion}).`);
 }
+export { handleNotion };
+export default handleNotion;
